@@ -1,16 +1,25 @@
-version: '3'
+version: "3.7"
 services:
-  lazydocker:
-    build:
-      context: https://github.com/jesseduffield/lazydocker.git
-      args:
-        BASE_IMAGE_BUILDER: golang
-        GOARCH: amd64
-        GOARM:
-    image: lazyteam/lazydocker
-    container_name: lazydocker
-    stdin_open: true
-    tty: true
+  ts-webserver2:
+    image: tailscale/tailscale:latest
+    hostname: webserver2
+    environment:
+     
+     - TS_AUTHKEY=tskey-auth-6kG8iSuQ911CNTRL-RQ62eK5yPSYqRYmDUaumJYnNRuJmbjh3
+     - TS_EXTRA_ARGS=--advertise-exit-node
+     - TS_STATE_DIR=/var/lib/tailscale
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - ./config:/.config/jesseduffield/lazydocker
+      - tailscale-data-webserver2:/var/lib/tailscale
+      - /dev/net/tun:/dev/net/tun
+    cap_add:
+      - net_admin
+      - sys_module
+    restart: unless-stopped
+  webserver2:
+      image: nginx
+      network_mode: service:ts-webserver2
+      depends_on: 
+        - ts-webserver2
+volumes:
+  tailscale-data-webserver2:
+    driver: local
